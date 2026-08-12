@@ -121,6 +121,7 @@ export interface VehicleRoute {
  * ---------------------------------------------------------------- */
 
 export interface WorldResponse {
+  unserviceable_orders?: Order[];
   vehicles: Vehicle[];
 
   pending_orders?: Order[];

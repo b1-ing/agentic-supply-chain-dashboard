@@ -1,8 +1,9 @@
-import type { Order } from "@/lib/api";
+import type {Order} from "@/lib/api";
 
 interface OrdersPanelProps {
-    pendingOrders: Order[];
-    activeOrders: Order[];
+    pendingOrders: Order[],
+    activeOrders: Order[],
+    cancelledOrders: Order[]
 }
 
 function OrderCard({
@@ -79,6 +80,7 @@ function OrderCard({
 export default function OrdersPanel({
                                         pendingOrders,
                                         activeOrders,
+                                        cancelledOrders
                                     }: OrdersPanelProps) {
     return (
         <section className="border-b border-slate-200">
@@ -129,6 +131,28 @@ export default function OrdersPanel({
                                     key={order.order_id}
                                     order={order}
                                     active={true}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                <div>
+                    <div className="mb-1.5 px-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                        Cancelled ({cancelledOrders.length})
+                    </div>
+
+                    {cancelledOrders.length === 0 ? (
+                        <p className="px-1 text-xs text-slate-400">
+                            No active orders
+                        </p>
+                    ) : (
+                        <div className="space-y-1.5">
+                            {cancelledOrders.map((order) => (
+                                <OrderCard
+                                    key={order.order_id}
+                                    order={order}
+                                    active={false}
                                 />
                             ))}
                         </div>

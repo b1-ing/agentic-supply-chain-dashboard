@@ -98,13 +98,6 @@ export default function DashboardData({
         return null;
     }
 
-    const pendingOrders =
-        world.pending_orders ??
-        world.new_orders ??
-        [];
-
-    const activeOrders =
-        world.orders_in_progress ?? [];
 
     return (
         <div className="grid h-full min-h-0 grid-cols-[280px_minmax(0,1fr)_300px]">
@@ -120,6 +113,9 @@ export default function DashboardData({
                     }
                     activeOrders={
                         world.orders_in_progress ?? []
+                    }
+                    cancelledOrders={
+                        world.unserviceable_orders ?? []
                     }
                 />
 

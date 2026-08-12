@@ -15,6 +15,7 @@ import "leaflet/dist/leaflet.css";
 
 interface WorldMapProps {
     routes?: VehicleRoute[];
+    tomtomApiKey?: string; // Add this prop or use process.env
 }
 
 /* ------------------------------------------------------------------
@@ -217,6 +218,7 @@ function getStopIcon(
 
 export default function WorldMap({
                                      routes = [],
+                                     tomtomApiKey = process.env.NEXT_PUBLIC_TOMTOM_API_KEY || "YOUR_FALLBACK_API_KEY",
                                  }: WorldMapProps) {
     return (
         <MapContainer
@@ -229,17 +231,26 @@ export default function WorldMap({
              * OpenStreetMap base layer
              * ---------------------------------------------------- */}
 
-            {/* Your traffic network */}
-            <TileLayer
-                url="http://127.0.0.1:8000/traffic/{z}/{x}/{y}.png"
-                opacity={0.85}
-            />
+            {/*<TileLayer*/}
+            {/*    url="http://127.0.0.1:8000/traffic/{z}/{x}/{y}.png"*/}
+            {/*    opacity={0.85}*/}
+            {/*/>*/}
 
-            
             <TileLayer
                 attribution="&copy; OpenStreetMap contributors"
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
+
+            {/*<TileLayer*/}
+            {/*    attribution='&copy; 1992 - 2026 TomTom Traffic.'*/}
+            {/*    url={`https://{s}.api.tomtom.com/traffic/map/4/tile/flow/relative0/{z}/{x}/{y}.png?key=${tomtomApiKey}`}*/}
+            {/*    subdomains="abcd"*/}
+            {/*    maxZoom={22}*/}
+            {/*    opacity={0.8} // Adjust opacity so base map features stay visible underneath*/}
+            {/*/>*/}
+
+
+
 
 
 
