@@ -41,7 +41,7 @@ export interface AgentRunResult {
  * ---------------------------------------------------------------- */
 
 const SUGGESTED_PROMPTS = [
-    "Create order: 50kg chilled seafood from depot to Tengah Airbase",
+    "Deliver 50kg chilled seafood from depot to Tengah Airbase",
     "PIE is closed, re-route active fleet",
 ];
 
