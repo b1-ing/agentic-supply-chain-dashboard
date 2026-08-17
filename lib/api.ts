@@ -53,6 +53,15 @@ export interface Vehicle {
   hazardous_certified: boolean;
 }
 
+export interface Depot{
+depot_id: string;
+
+graph_node: number | null;
+lat: number;
+lon: number;
+
+}
+
 /* ------------------------------------------------------------------
  * Orders
  * ---------------------------------------------------------------- */
@@ -124,6 +133,8 @@ export interface WorldResponse {
   unserviceable_orders?: Order[];
   vehicles: Vehicle[];
 
+  depots: Depot[];
+
   pending_orders?: Order[];
   new_orders?: Order[];
 
@@ -166,4 +177,99 @@ export function getOrders(): Promise<Order[]> {
 
 export function getRoutes(): Promise<VehicleRoute[]> {
   return request<VehicleRoute[]>("/api/routes");
+}
+
+
+export interface AgentStreamEvent {
+  type: "thought" | "agent_thought" | "tool_start" | "tool_end" | "agent_final" | "agent_error";
+  id?: string;
+  toolName?: string;
+  args?: Record<string, unknown>;
+  status?: "running" | "completed" | "failed";
+  durationMs?: number;
+  result?: unknown;
+  error?: string;
+  content?: string;
+  output?: string;
+}
+
+export interface RunAgentHandlers {
+  onEvent?: (event: AgentStreamEvent) => void;
+}
+
+/**
+ * Executes the operations agent and streams real-time thoughts, tool calls, and final output via SSE.
+ */
+export async function runAgent(
+    message: string,
+    handlers: RunAgentHandlers = {}
+): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/agent`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "text/event-stream",
+    },
+    body: JSON.stringify({ message }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "Unknown server error");
+    throw new Error(`Agent request failed (${response.status}): ${errorText}`);
+  }
+
+  if (!response.body) {
+    throw new Error("No readable stream returned from backend agent service.");
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder("utf-8");
+  let buffer = "";
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+
+      // Split SSE chunks by double newline
+      const parts = buffer.split("\n\n");
+      // Keep incomplete chunk in the buffer
+      buffer = parts.pop() || "";
+
+      for (const part of parts) {
+        const line = part.trim();
+        if (!line) continue;
+
+        // Extract "data: " lines from Server-Sent Events stream
+        if (line.startsWith("data:")) {
+          const jsonStr = line.replace(/^data:\s*/, "").trim();
+          if (!jsonStr || jsonStr === "[DONE]") continue;
+
+          try {
+            const event: AgentStreamEvent = JSON.parse(jsonStr);
+            handlers.onEvent?.(event);
+          } catch (parseErr) {
+            console.warn("Failed to parse SSE line:", line, parseErr);
+          }
+        }
+      }
+    }
+
+    // Process any remaining tail in the buffer
+    if (buffer.trim().startsWith("data:")) {
+      const jsonStr = buffer.replace(/^data:\s*/, "").trim();
+      if (jsonStr && jsonStr !== "[DONE]") {
+        try {
+          const event: AgentStreamEvent = JSON.parse(jsonStr);
+          handlers.onEvent?.(event);
+        } catch {
+          // Ignore trailing stream parse errors
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
 }
